@@ -1,0 +1,78 @@
+{
+  "name": "@rhdh/plugin-orchestrator-actions-backend",
+  "version": "1.0.0",
+  "description": "RHDH Orchestrator Actions Plugin for Backstage MCP Actions Backend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/redhat-developer/rhdh-plugins.git",
+    "directory": "workspaces/orchestrator/plugins/orchestrator-actions-backend"
+  },
+  "homepage": "https://github.com/redhat-developer/rhdh-plugins/tree/main/workspaces/orchestrator/plugins/orchestrator-actions-backend#readme",
+  "bugs": {
+    "url": "https://github.com/redhat-developer/rhdh-plugins/issues"
+  },
+  "keywords": [
+    "backstage",
+    "backstage-plugin",
+    "mcp",
+    "orchestrator",
+    "rhdh",
+    "workflow",
+    "actions",
+    "plugin-backend"
+  ],
+  "backstage": {
+    "role": "backend-plugin",
+    "pluginId": "rhdh-orchestrator-actions",
+    "pluginPackages": [
+      "@rhdh/plugin-orchestrator-actions-backend"
+    ]
+  },
+  "files": [
+    "dist",
+    "config.d.ts"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.build.json",
+    "build:watch": "tsc -p tsconfig.build.json --watch",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "@backstage/backend-plugin-api": "^1.0.0",
+    "@backstage/plugin-mcp-actions-backend": "^0.1.2",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@backstage/cli": "^1.0.0",
+    "@backstage/core-node": "^1.0.0",
+    "@backstage/test-utils": "^1.0.0",
+    "@types/node": "^18.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@backstage/backend-plugin-api": "^1.0.0",
+    "@backstage/plugin-mcp-actions-backend": "^0.1.2"
+  },
+  "engines": {
+    "node": "18 || 20",
+    "yarn": ">=1.6.0"
+  },
+  "author": {
+    "name": "Red Hat Developer Hub",
+    "email": "rhdh@redhat.com"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
