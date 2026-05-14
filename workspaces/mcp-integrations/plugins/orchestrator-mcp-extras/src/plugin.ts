@@ -33,12 +33,13 @@ export const orchestratorMcpExtrasPlugin = createBackendPlugin({
         actionsRegistry: actionsRegistryServiceRef,
         auth: coreServices.auth,
         discovery: coreServices.discovery,
+        httpRouter: coreServices.httpRouter,
         logger: coreServices.logger,
       },
       async init({ actionsRegistry, auth, discovery, logger }) {
         createOrchestratorActions({ actionsRegistry, auth, discovery, logger });
         logger.info(
-          'Registered orchestrator MCP actions: workflows:list, workflow:execute, instance:get',
+          'Registered orchestrator MCP actions: workflows-list, workflow-get, workflow-execute, instance-get, instances-list',
         );
       },
     });

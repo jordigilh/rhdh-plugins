@@ -20,46 +20,38 @@ import {
   LoggerService,
 } from '@backstage/backend-plugin-api';
 import { ActionsRegistryService } from '@backstage/backend-plugin-api/alpha';
+import { ProcessInstanceDTO } from './createGetInstanceAction';
 import { orchestratorFetch } from './orchestratorApi';
 
-export interface WorkflowOverviewDTO {
-  workflowId: string;
-  name?: string;
-  format: string;
-  lastRunId?: string;
-  lastTriggeredMs?: number;
-  lastRunStatus?: string;
-  description?: string;
-  isAvailable?: boolean;
-}
-
-export interface WorkflowOverviewListResult {
-  overviews: WorkflowOverviewDTO[];
+export interface ProcessInstanceListResult {
+  items: ProcessInstanceDTO[];
   paginationInfo: Record<string, unknown>;
 }
 
-export async function fetchWorkflowOverviews(options: {
+export async function fetchInstances(options: {
   discovery: DiscoveryService;
   auth: AuthService;
   logger: LoggerService;
   credentials: BackstageCredentials;
-}): Promise<WorkflowOverviewListResult> {
+}): Promise<ProcessInstanceListResult> {
   const response = await orchestratorFetch({
     ...options,
-    path: '/v2/workflows/overview',
+    path: '/v2/workflows/instances',
     method: 'POST',
     body: {},
   });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Failed to fetch workflows: ${response.status} ${text}`);
+    throw new Error(
+      `Failed to fetch workflow instances: ${response.status} ${text}`,
+    );
   }
 
-  return response.json() as Promise<WorkflowOverviewListResult>;
+  return response.json() as Promise<ProcessInstanceListResult>;
 }
 
-export const createListWorkflowsAction = ({
+export const createListInstancesAction = ({
   actionsRegistry,
   auth,
   discovery,
@@ -71,28 +63,28 @@ export const createListWorkflowsAction = ({
   logger: LoggerService;
 }) => {
   actionsRegistry.register({
-    name: 'orchestrator-workflows-list',
-    title: 'List Orchestrator Workflows',
+    name: 'orchestrator-instances-list',
+    title: 'List Orchestrator Workflow Instances',
     attributes: {
       destructive: false,
       readOnly: true,
       idempotent: true,
     },
-    description: `List all available orchestrator workflows from the RHDH Orchestrator backend.
-Returns a summary of each workflow including its ID, name, description, format, availability status, and information about the last execution.
+    description: `List all executed workflow instances from the RHDH Orchestrator backend.
+Returns a summary of each workflow execution including its ID, workflow ID, status, and timestamps.
 
 Example invocations:
-  # List all available workflows
-  orchestrator-workflows-list
+  # List all executed workflow instances
+  orchestrator-instances-list
   Output: {
-    "workflows": [
+    "instances": [
       {
+        "id": "abc-123-def-456",
         "workflowId": "greeting",
-        "name": "Greeting Workflow",
-        "description": "A simple greeting workflow",
-        "format": "yaml",
-        "isAvailable": true,
-        "lastRunStatus": "COMPLETED"
+        "status": "COMPLETED",
+        "startedAt": "2025-01-15T10:30:00Z",
+        "completedAt": "2025-01-15T10:30:05Z",
+        "description": "YAML based greeting workflow"
       }
     ]
   }
@@ -101,38 +93,35 @@ Example invocations:
       input: z => z.object({}),
       output: z =>
         z.object({
-          workflows: z
+          instances: z
             .array(
               z.object({
-                workflowId: z.string().describe('Unique workflow identifier'),
-                name: z
+                id: z.string().describe('The instance ID'),
+                workflowId: z.string().describe('The workflow definition ID'),
+                status: z
                   .string()
                   .optional()
-                  .describe('Human-readable workflow name'),
+                  .describe(
+                    'Current execution status (ACTIVE, ERROR, COMPLETED, ABORTED, SUSPENDED, PENDING)',
+                  ),
+                startedAt: z
+                  .string()
+                  .optional()
+                  .describe('ISO 8601 timestamp when execution started'),
+                completedAt: z
+                  .string()
+                  .optional()
+                  .nullable()
+                  .describe(
+                    'ISO 8601 timestamp when execution completed (null if still running)',
+                  ),
                 description: z
                   .string()
                   .optional()
-                  .describe('Workflow description'),
-                format: z.string().describe('Workflow definition format'),
-                isAvailable: z
-                  .boolean()
-                  .optional()
-                  .describe('Whether the workflow service is reachable'),
-                lastRunStatus: z
-                  .string()
-                  .optional()
-                  .describe(
-                    'Status of the most recent execution (ACTIVE, ERROR, COMPLETED, ABORTED, SUSPENDED, PENDING)',
-                  ),
-                lastTriggeredMs: z
-                  .number()
-                  .optional()
-                  .describe(
-                    'Timestamp in milliseconds of the last execution trigger',
-                  ),
+                  .describe('Instance description'),
               }),
             )
-            .describe('Array of workflow overview summaries'),
+            .describe('Array of workflow execution instance summaries'),
           error: z
             .string()
             .optional()
@@ -141,7 +130,7 @@ Example invocations:
     },
     action: async ({ credentials }) => {
       try {
-        const result = await fetchWorkflowOverviews({
+        const result = await fetchInstances({
           discovery,
           auth,
           logger,
@@ -149,14 +138,13 @@ Example invocations:
         });
         return {
           output: {
-            workflows: (result.overviews ?? []).map(w => ({
-              workflowId: w.workflowId,
-              name: w.name,
-              description: w.description,
-              format: w.format,
-              isAvailable: w.isAvailable,
-              lastRunStatus: w.lastRunStatus,
-              lastTriggeredMs: w.lastTriggeredMs,
+            instances: (result.items ?? []).map(inst => ({
+              id: inst.id,
+              workflowId: inst.processId,
+              status: inst.state,
+              startedAt: inst.start,
+              completedAt: inst.end,
+              description: inst.description,
             })),
             error: undefined,
           },
@@ -164,12 +152,12 @@ Example invocations:
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(
-          'orchestrator-workflows-list: Error fetching workflows:',
+          'orchestrator-instances-list: Error fetching instances:',
           error instanceof Error ? error : undefined,
         );
         return {
           output: {
-            workflows: [],
+            instances: [],
             error: message,
           },
         };

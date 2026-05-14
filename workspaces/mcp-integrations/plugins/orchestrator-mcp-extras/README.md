@@ -6,9 +6,11 @@ This Backstage backend plugin exposes [RHDH Orchestrator](https://docs.redhat.co
 
 | Tool Name                       | Description                                                                   |
 | ------------------------------- | ----------------------------------------------------------------------------- |
-| `orchestrator:workflows:list`   | List all available orchestrator workflows with their status and metadata      |
-| `orchestrator:workflow:execute` | Execute a workflow by ID with input data, returns an instance ID for tracking |
-| `orchestrator:instance:get`     | Get the status and output of a workflow execution instance                    |
+| `orchestrator-workflows-list`   | List all available orchestrator workflows with their status and metadata      |
+| `orchestrator-workflow-get`     | Get detailed info about a workflow including its input schema                 |
+| `orchestrator-workflow-execute` | Execute a workflow by ID with input data, returns an instance ID for tracking |
+| `orchestrator-instance-get`     | Get the status and output of a workflow execution instance                    |
+| `orchestrator-instances-list`   | List all executed workflow instances with their status and timestamps         |
 
 ## Prerequisites
 
@@ -172,8 +174,8 @@ Both endpoints require a `Bearer` token in the `Authorization` header.
 
 ### Authentication
 
-- **Read-only operations** (`tools/list`, `orchestrator:workflows:list`): Work with both service tokens (e.g., `BACKEND_SECRET`) and user tokens.
-- **Write operations** (`orchestrator:workflow:execute`): **Require user credentials.** The orchestrator backend enforces user identity for workflow execution. Use a Backstage user session token or guest auth token.
+- **Read-only operations** (`tools/list`, `orchestrator-workflows-list`): Work with both service tokens (e.g., `BACKEND_SECRET`) and user tokens.
+- **Write operations** (`orchestrator-workflow-execute`): **Require user credentials.** The orchestrator backend enforces user identity for workflow execution. Use a Backstage user session token or guest auth token.
 
 To obtain a guest user token for testing:
 
@@ -248,7 +250,7 @@ orchestrator:
 
 > **User:** What workflows are available in the orchestrator?
 >
-> **LLM** calls `orchestrator:workflows:list` -> receives list of workflows
+> **LLM** calls `orchestrator-workflows-list` -> receives list of workflows
 >
 > **LLM:** There is 1 workflow available:
 >
@@ -258,7 +260,7 @@ orchestrator:
 
 > **User:** Run the greeting workflow for Alice in English
 >
-> **LLM** calls `orchestrator:workflow:execute` with `workflowId: "greeting"`, `inputData: {"name": "Alice", "language": "English"}`
+> **LLM** calls `orchestrator-workflow-execute` with `workflowId: "greeting"`, `inputData: {"name": "Alice", "language": "English"}`
 >
 > **LLM:** I've started the greeting workflow. The execution ID is `abc-123-def-456`. Let me check the result...
 
@@ -266,7 +268,7 @@ orchestrator:
 
 > **User:** What's the status of that workflow run?
 >
-> **LLM** calls `orchestrator:instance:get` with `instanceId: "abc-123-def-456"`
+> **LLM** calls `orchestrator-instance-get` with `instanceId: "abc-123-def-456"`
 >
 > **LLM:** The greeting workflow completed successfully in 0.004 seconds. The output greeting is: _"Hello from YAML Workflow"_
 

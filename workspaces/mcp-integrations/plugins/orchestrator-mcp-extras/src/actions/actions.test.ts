@@ -18,6 +18,8 @@ import { mockServices } from '@backstage/backend-test-utils';
 import { createListWorkflowsAction } from './createListWorkflowsAction';
 import { createExecuteWorkflowAction } from './createExecuteWorkflowAction';
 import { createGetInstanceAction } from './createGetInstanceAction';
+import { createGetWorkflowAction } from './createGetWorkflowAction';
+import { createListInstancesAction } from './createListInstancesAction';
 
 describe('orchestrator actions (actionsRegistryServiceMock)', () => {
   const mockLogger = mockServices.logger.mock();
@@ -42,7 +44,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
     jest.restoreAllMocks();
   });
 
-  describe('orchestrator:workflows:list', () => {
+  describe('orchestrator-workflows-list', () => {
     function setup() {
       const registry = actionsRegistryServiceMock();
       createListWorkflowsAction({
@@ -81,7 +83,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:workflows:list',
+        id: 'test:orchestrator-workflows-list',
         input: {},
       });
 
@@ -114,7 +116,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:workflows:list',
+        id: 'test:orchestrator-workflows-list',
         input: {},
       });
 
@@ -131,7 +133,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:workflows:list',
+        id: 'test:orchestrator-workflows-list',
         input: {},
       });
 
@@ -147,7 +149,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       await registry.invoke({
-        id: 'test:orchestrator:workflows:list',
+        id: 'test:orchestrator-workflows-list',
         input: {},
       });
 
@@ -159,7 +161,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
     });
   });
 
-  describe('orchestrator:workflow:execute', () => {
+  describe('orchestrator-workflow-execute', () => {
     function setup() {
       const registry = actionsRegistryServiceMock();
       createExecuteWorkflowAction({
@@ -179,7 +181,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:workflow:execute',
+        id: 'test:orchestrator-workflow-execute',
         input: {
           workflowId: 'greeting',
           inputData: { name: 'Alice', language: 'English' },
@@ -208,7 +210,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:workflow:execute',
+        id: 'test:orchestrator-workflow-execute',
         input: {
           workflowId: 'complex-workflow',
           inputData: {
@@ -232,7 +234,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:workflow:execute',
+        id: 'test:orchestrator-workflow-execute',
         input: { workflowId: 'greeting', inputData: {} },
       });
 
@@ -249,7 +251,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       await registry.invoke({
-        id: 'test:orchestrator:workflow:execute',
+        id: 'test:orchestrator-workflow-execute',
         input: {
           workflowId: 'workflow/with spaces',
           inputData: {},
@@ -265,7 +267,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
     });
   });
 
-  describe('orchestrator:instance:get', () => {
+  describe('orchestrator-instance-get', () => {
     function setup() {
       const registry = actionsRegistryServiceMock();
       createGetInstanceAction({
@@ -299,7 +301,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:instance:get',
+        id: 'test:orchestrator-instance-get',
         input: { instanceId: 'inst-999' },
       });
 
@@ -325,7 +327,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:instance:get',
+        id: 'test:orchestrator-instance-get',
         input: { instanceId: 'nonexistent-id' },
       });
 
@@ -349,7 +351,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:instance:get',
+        id: 'test:orchestrator-instance-get',
         input: { instanceId: 'inst-json' },
       });
 
@@ -370,7 +372,7 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       const registry = setup();
       const result = await registry.invoke({
-        id: 'test:orchestrator:instance:get',
+        id: 'test:orchestrator-instance-get',
         input: { instanceId: 'inst-no-data' },
       });
 
@@ -379,8 +381,289 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
     });
   });
 
+  describe('orchestrator-workflow-get', () => {
+    function setup() {
+      const registry = actionsRegistryServiceMock();
+      createGetWorkflowAction({
+        actionsRegistry: registry,
+        auth: mockAuth,
+        discovery: mockDiscovery as any,
+        logger: mockLogger,
+      });
+      return registry;
+    }
+
+    it('should return workflow overview and input schema on success', async () => {
+      let callCount = 0;
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        callCount++;
+        if (url.includes('/inputSchema')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                type: 'object',
+                properties: {
+                  name: { type: 'string', description: 'Name to greet' },
+                },
+                required: ['name'],
+              }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              workflowId: 'greeting',
+              name: 'Greeting Workflow',
+              description: 'A greeting workflow',
+              format: 'yaml',
+              isAvailable: true,
+              lastRunStatus: 'COMPLETED',
+              lastTriggeredMs: 1700000000000,
+            }),
+        });
+      });
+
+      const registry = setup();
+      const result = await registry.invoke({
+        id: 'test:orchestrator-workflow-get',
+        input: { workflowId: 'greeting' },
+      });
+
+      expect(callCount).toBe(2);
+      expect(result.output.workflowId).toBe('greeting');
+      expect(result.output.name).toBe('Greeting Workflow');
+      expect(result.output.description).toBe('A greeting workflow');
+      expect(result.output.format).toBe('yaml');
+      expect(result.output.isAvailable).toBe(true);
+      expect(result.output.lastRunStatus).toBe('COMPLETED');
+      expect(result.output.error).toBeUndefined();
+
+      const schema = JSON.parse(result.output.inputSchema);
+      expect(schema.type).toBe('object');
+      expect(schema.properties.name.type).toBe('string');
+      expect(schema.required).toContain('name');
+    });
+
+    it('should return overview without schema when inputSchema endpoint fails', async () => {
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/inputSchema')) {
+          return Promise.resolve({
+            ok: false,
+            status: 404,
+            text: () => Promise.resolve('Not found'),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              workflowId: 'greeting',
+              name: 'Greeting Workflow',
+              format: 'yaml',
+              isAvailable: true,
+            }),
+        });
+      });
+
+      const registry = setup();
+      const result = await registry.invoke({
+        id: 'test:orchestrator-workflow-get',
+        input: { workflowId: 'greeting' },
+      });
+
+      expect(result.output.workflowId).toBe('greeting');
+      expect(result.output.inputSchema).toBeUndefined();
+      expect(result.output.error).toBeUndefined();
+    });
+
+    it('should return error when overview endpoint fails', async () => {
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/inputSchema')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ type: 'object' }),
+          });
+        }
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          text: () => Promise.resolve('Workflow not found'),
+        });
+      });
+
+      const registry = setup();
+      const result = await registry.invoke({
+        id: 'test:orchestrator-workflow-get',
+        input: { workflowId: 'nonexistent' },
+      });
+
+      expect(result.output.error).toContain('nonexistent');
+      expect(result.output.error).toContain('404');
+      expect(result.output.workflowId).toBeUndefined();
+    });
+
+    it('should URL-encode the workflow ID in request paths', async () => {
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/inputSchema')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              workflowId: 'workflow/with spaces',
+              format: 'yaml',
+            }),
+        });
+      });
+
+      const registry = setup();
+      await registry.invoke({
+        id: 'test:orchestrator-workflow-get',
+        input: { workflowId: 'workflow/with spaces' },
+      });
+
+      const calls = (global.fetch as jest.Mock).mock.calls;
+      const urls = calls.map((c: any[]) => c[0]);
+      expect(
+        urls.some((u: string) =>
+          u.includes('workflow%2Fwith%20spaces/overview'),
+        ),
+      ).toBe(true);
+      expect(
+        urls.some((u: string) =>
+          u.includes('workflow%2Fwith%20spaces/inputSchema'),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  describe('orchestrator-instances-list', () => {
+    function setup() {
+      const registry = actionsRegistryServiceMock();
+      createListInstancesAction({
+        actionsRegistry: registry,
+        auth: mockAuth,
+        discovery: mockDiscovery as any,
+        logger: mockLogger,
+      });
+      return registry;
+    }
+
+    it('should return mapped instance summaries on success', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            items: [
+              {
+                id: 'inst-001',
+                processId: 'greeting',
+                processName: 'Greeting Workflow',
+                state: 'COMPLETED',
+                start: '2026-04-28T10:00:00Z',
+                end: '2026-04-28T10:00:05Z',
+                description: 'Greeting run',
+              },
+              {
+                id: 'inst-002',
+                processId: 'create-ocp-project',
+                state: 'ACTIVE',
+                start: '2026-04-28T11:00:00Z',
+              },
+            ],
+            paginationInfo: {},
+          }),
+      });
+
+      const registry = setup();
+      const result = await registry.invoke({
+        id: 'test:orchestrator-instances-list',
+        input: {},
+      });
+
+      expect(result.output.instances).toHaveLength(2);
+      expect(result.output.instances[0]).toEqual(
+        expect.objectContaining({
+          id: 'inst-001',
+          workflowId: 'greeting',
+          status: 'COMPLETED',
+          startedAt: '2026-04-28T10:00:00Z',
+          completedAt: '2026-04-28T10:00:05Z',
+          description: 'Greeting run',
+        }),
+      );
+      expect(result.output.instances[1]).toEqual(
+        expect.objectContaining({
+          id: 'inst-002',
+          workflowId: 'create-ocp-project',
+          status: 'ACTIVE',
+          startedAt: '2026-04-28T11:00:00Z',
+        }),
+      );
+      expect(result.output.error).toBeUndefined();
+    });
+
+    it('should return empty instances array when none exist', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ items: [], paginationInfo: {} }),
+      });
+
+      const registry = setup();
+      const result = await registry.invoke({
+        id: 'test:orchestrator-instances-list',
+        input: {},
+      });
+
+      expect(result.output.instances).toEqual([]);
+      expect(result.output.error).toBeUndefined();
+    });
+
+    it('should return error in output on server failure', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve('Internal Server Error'),
+      });
+
+      const registry = setup();
+      const result = await registry.invoke({
+        id: 'test:orchestrator-instances-list',
+        input: {},
+      });
+
+      expect(result.output.error).toContain('500');
+      expect(result.output.instances).toEqual([]);
+    });
+
+    it('should pass caller credentials through to auth service', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ items: [], paginationInfo: {} }),
+      });
+
+      const registry = setup();
+      await registry.invoke({
+        id: 'test:orchestrator-instances-list',
+        input: {},
+      });
+
+      expect(mockAuth.getPluginRequestToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetPluginId: 'orchestrator',
+        }),
+      );
+    });
+  });
+
   describe('input schema validation', () => {
-    it('should reject orchestrator:workflows:list with non-object input', async () => {
+    it('should reject orchestrator-workflows-list with non-object input', async () => {
       const registry = actionsRegistryServiceMock();
       createListWorkflowsAction({
         actionsRegistry: registry,
@@ -391,13 +674,13 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:workflows:list',
+          id: 'test:orchestrator-workflows-list',
           input: 'not-an-object' as any,
         }),
       ).rejects.toThrow();
     });
 
-    it('should reject orchestrator:workflow:execute with missing workflowId', async () => {
+    it('should reject orchestrator-workflow-execute with missing workflowId', async () => {
       const registry = actionsRegistryServiceMock();
       createExecuteWorkflowAction({
         actionsRegistry: registry,
@@ -408,13 +691,13 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:workflow:execute',
+          id: 'test:orchestrator-workflow-execute',
           input: { inputData: { name: 'test' } },
         }),
       ).rejects.toThrow();
     });
 
-    it('should reject orchestrator:workflow:execute with empty workflowId', async () => {
+    it('should reject orchestrator-workflow-execute with empty workflowId', async () => {
       const registry = actionsRegistryServiceMock();
       createExecuteWorkflowAction({
         actionsRegistry: registry,
@@ -425,13 +708,13 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:workflow:execute',
+          id: 'test:orchestrator-workflow-execute',
           input: { workflowId: '', inputData: {} },
         }),
       ).rejects.toThrow();
     });
 
-    it('should reject orchestrator:workflow:execute with non-string workflowId', async () => {
+    it('should reject orchestrator-workflow-execute with non-string workflowId', async () => {
       const registry = actionsRegistryServiceMock();
       createExecuteWorkflowAction({
         actionsRegistry: registry,
@@ -442,13 +725,13 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:workflow:execute',
+          id: 'test:orchestrator-workflow-execute',
           input: { workflowId: 123, inputData: {} },
         }),
       ).rejects.toThrow();
     });
 
-    it('should reject orchestrator:workflow:execute with missing inputData', async () => {
+    it('should reject orchestrator-workflow-execute with missing inputData', async () => {
       const registry = actionsRegistryServiceMock();
       createExecuteWorkflowAction({
         actionsRegistry: registry,
@@ -459,13 +742,13 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:workflow:execute',
+          id: 'test:orchestrator-workflow-execute',
           input: { workflowId: 'greeting' },
         }),
       ).rejects.toThrow();
     });
 
-    it('should reject orchestrator:instance:get with missing instanceId', async () => {
+    it('should reject orchestrator-instance-get with missing instanceId', async () => {
       const registry = actionsRegistryServiceMock();
       createGetInstanceAction({
         actionsRegistry: registry,
@@ -476,13 +759,13 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:instance:get',
+          id: 'test:orchestrator-instance-get',
           input: {},
         }),
       ).rejects.toThrow();
     });
 
-    it('should reject orchestrator:instance:get with empty instanceId', async () => {
+    it('should reject orchestrator-instance-get with empty instanceId', async () => {
       const registry = actionsRegistryServiceMock();
       createGetInstanceAction({
         actionsRegistry: registry,
@@ -493,13 +776,13 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:instance:get',
+          id: 'test:orchestrator-instance-get',
           input: { instanceId: '' },
         }),
       ).rejects.toThrow();
     });
 
-    it('should reject orchestrator:instance:get with non-string instanceId', async () => {
+    it('should reject orchestrator-instance-get with non-string instanceId', async () => {
       const registry = actionsRegistryServiceMock();
       createGetInstanceAction({
         actionsRegistry: registry,
@@ -510,8 +793,42 @@ describe('orchestrator actions (actionsRegistryServiceMock)', () => {
 
       await expect(
         registry.invoke({
-          id: 'test:orchestrator:instance:get',
+          id: 'test:orchestrator-instance-get',
           input: { instanceId: 42 },
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('should reject orchestrator-workflow-get with missing workflowId', async () => {
+      const registry = actionsRegistryServiceMock();
+      createGetWorkflowAction({
+        actionsRegistry: registry,
+        auth: mockAuth,
+        discovery: mockDiscovery as any,
+        logger: mockLogger,
+      });
+
+      await expect(
+        registry.invoke({
+          id: 'test:orchestrator-workflow-get',
+          input: {},
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('should reject orchestrator-workflow-get with empty workflowId', async () => {
+      const registry = actionsRegistryServiceMock();
+      createGetWorkflowAction({
+        actionsRegistry: registry,
+        auth: mockAuth,
+        discovery: mockDiscovery as any,
+        logger: mockLogger,
+      });
+
+      await expect(
+        registry.invoke({
+          id: 'test:orchestrator-workflow-get',
+          input: { workflowId: '' },
         }),
       ).rejects.toThrow();
     });

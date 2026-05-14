@@ -61,7 +61,7 @@ export const createExecuteWorkflowAction = ({
   logger: LoggerService;
 }) => {
   actionsRegistry.register({
-    name: 'orchestrator:workflow:execute',
+    name: 'orchestrator-workflow-execute',
     title: 'Execute Orchestrator Workflow',
     attributes: {
       destructive: true,
@@ -74,7 +74,7 @@ Returns the instance ID of the newly created workflow execution that can be used
 
 Example invocations:
   # Execute a greeting workflow
-  orchestrator:workflow:execute workflowId:"greeting" inputData:{"name":"Alice","language":"English"}
+  orchestrator-workflow-execute workflowId:"greeting" inputData:{"name":"Alice","language":"English"}
   Output: {
     "instanceId": "abc-123-def-456",
   }
@@ -110,7 +110,7 @@ Example invocations:
             .string()
             .optional()
             .describe(
-              'The instance ID of the workflow execution. Use with orchestrator:instance:get to check status.',
+              'The instance ID of the workflow execution. Use with orchestrator-instance-get to check status.',
             ),
           error: z
             .string()
@@ -137,7 +137,7 @@ Example invocations:
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(
-          `orchestrator:workflow:execute: Error executing workflow '${input.workflowId}':`,
+          `orchestrator-workflow-execute: Error executing workflow '${input.workflowId}':`,
           error instanceof Error ? error : undefined,
         );
         return {

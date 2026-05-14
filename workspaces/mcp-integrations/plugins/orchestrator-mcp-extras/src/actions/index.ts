@@ -22,10 +22,14 @@ import { ActionsRegistryService } from '@backstage/backend-plugin-api/alpha';
 import { createListWorkflowsAction } from './createListWorkflowsAction';
 import { createExecuteWorkflowAction } from './createExecuteWorkflowAction';
 import { createGetInstanceAction } from './createGetInstanceAction';
+import { createGetWorkflowAction } from './createGetWorkflowAction';
+import { createListInstancesAction } from './createListInstancesAction';
 
 export { createListWorkflowsAction } from './createListWorkflowsAction';
 export { createExecuteWorkflowAction } from './createExecuteWorkflowAction';
 export { createGetInstanceAction } from './createGetInstanceAction';
+export { createGetWorkflowAction } from './createGetWorkflowAction';
+export { createListInstancesAction } from './createListInstancesAction';
 
 export const createOrchestratorActions = (options: {
   actionsRegistry: ActionsRegistryService;
@@ -36,4 +40,6 @@ export const createOrchestratorActions = (options: {
   createListWorkflowsAction(options);
   createExecuteWorkflowAction(options);
   createGetInstanceAction(options);
+  createGetWorkflowAction(options);
+  createListInstancesAction(options);
 };

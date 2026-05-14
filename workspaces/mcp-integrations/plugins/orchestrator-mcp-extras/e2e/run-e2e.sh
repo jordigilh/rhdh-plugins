@@ -149,8 +149,8 @@ names=sorted([t['name'] for t in d['result']['tools']])
 print(','.join(names))
 " 2>/dev/null || echo "")
 
-if [[ "$TOOL_COUNT" -ge 3 ]] && echo "$TOOL_NAMES" | grep -q "orchestrator:instance:get" && echo "$TOOL_NAMES" | grep -q "orchestrator:workflow:execute" && echo "$TOOL_NAMES" | grep -q "orchestrator:workflows:list"; then
-  pass "TC-E2E-002: tools/list returns all 3 orchestrator tools ($TOOL_COUNT total)"
+if [[ "$TOOL_COUNT" -ge 5 ]] && echo "$TOOL_NAMES" | grep -q "orchestrator-instance-get" && echo "$TOOL_NAMES" | grep -q "orchestrator-instances-list" && echo "$TOOL_NAMES" | grep -q "orchestrator-workflow-execute" && echo "$TOOL_NAMES" | grep -q "orchestrator-workflows-list" && echo "$TOOL_NAMES" | grep -q "orchestrator-workflow-get"; then
+  pass "TC-E2E-002: tools/list returns all 5 orchestrator tools ($TOOL_COUNT total)"
 else
   fail "TC-E2E-002: Expected 3+ tools, got $TOOL_COUNT. Names: $TOOL_NAMES"
 fi
@@ -188,13 +188,13 @@ fi
 echo ""
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TEST GROUP 2: orchestrator:workflows:list
+# TEST GROUP 2: orchestrator-workflows-list
 # ══════════════════════════════════════════════════════════════════════════════
-echo "── Test Group 2: orchestrator:workflows:list ────"
+echo "── Test Group 2: orchestrator-workflows-list ────"
 
 # TC-E2E-010: List workflows returns results
 log "TC-E2E-010: List workflows returns non-empty results"
-RESPONSE=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"orchestrator:workflows:list","arguments":{}}}')
+RESPONSE=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"orchestrator-workflows-list","arguments":{}}}')
 DATA=$(extract_data "$RESPONSE")
 LIST_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
 LIST_JSON=$(echo "$LIST_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -243,7 +243,7 @@ fi
 
 # TC-E2E-013: List workflows with service token also works (read-only op)
 log "TC-E2E-013: List workflows works with service token"
-RESPONSE=$(mcp_call "$BACKEND_SECRET" '{"jsonrpc":"2.0","id":13,"method":"tools/call","params":{"name":"orchestrator:workflows:list","arguments":{}}}')
+RESPONSE=$(mcp_call "$BACKEND_SECRET" '{"jsonrpc":"2.0","id":13,"method":"tools/call","params":{"name":"orchestrator-workflows-list","arguments":{}}}')
 DATA=$(extract_data "$RESPONSE")
 SVC_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
 SVC_JSON=$(echo "$SVC_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -258,9 +258,9 @@ fi
 echo ""
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TEST GROUP 3: orchestrator:workflow:execute
+# TEST GROUP 3: orchestrator-workflow-execute
 # ══════════════════════════════════════════════════════════════════════════════
-echo "── Test Group 3: orchestrator:workflow:execute ──"
+echo "── Test Group 3: orchestrator-workflow-execute ──"
 
 if [[ "$SKIP_EXECUTE" == "true" ]]; then
   skip "TC-E2E-020: Execute workflow (SKIP_EXECUTE=true)"
@@ -271,7 +271,7 @@ else
 
   # TC-E2E-020: Execute workflow succeeds
   log "TC-E2E-020: Execute workflow '$WORKFLOW'"
-  RESPONSE=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":20,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator:workflow:execute\",\"arguments\":{\"workflowId\":\"$WORKFLOW\",\"inputData\":{\"name\":\"E2E Test\",\"language\":\"English\"}}}}")
+  RESPONSE=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":20,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator-workflow-execute\",\"arguments\":{\"workflowId\":\"$WORKFLOW\",\"inputData\":{\"name\":\"E2E Test\",\"language\":\"English\"}}}}")
   DATA=$(extract_data "$RESPONSE")
   EXEC_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
   EXEC_JSON=$(echo "$EXEC_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -298,7 +298,7 @@ else
 
   # TC-E2E-022: Execute with service token fails (requires user credentials)
   log "TC-E2E-022: Execute with service token returns error"
-  RESPONSE=$(mcp_call "$BACKEND_SECRET" "{\"jsonrpc\":\"2.0\",\"id\":22,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator:workflow:execute\",\"arguments\":{\"workflowId\":\"$WORKFLOW\",\"inputData\":{\"name\":\"SvcTest\",\"language\":\"English\"}}}}")
+  RESPONSE=$(mcp_call "$BACKEND_SECRET" "{\"jsonrpc\":\"2.0\",\"id\":22,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator-workflow-execute\",\"arguments\":{\"workflowId\":\"$WORKFLOW\",\"inputData\":{\"name\":\"SvcTest\",\"language\":\"English\"}}}}")
   DATA=$(extract_data "$RESPONSE")
   SVC_EXEC_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
   SVC_EXEC_JSON=$(echo "$SVC_EXEC_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -314,9 +314,9 @@ fi
 echo ""
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TEST GROUP 4: orchestrator:instance:get
+# TEST GROUP 4: orchestrator-instance-get
 # ══════════════════════════════════════════════════════════════════════════════
-echo "── Test Group 4: orchestrator:instance:get ──────"
+echo "── Test Group 4: orchestrator-instance-get ──────"
 
 if [[ -z "${INSTANCE_ID:-}" ]]; then
   skip "TC-E2E-030: Get instance (no instance ID available)"
@@ -331,7 +331,7 @@ else
 
   # TC-E2E-030: Get instance succeeds
   log "TC-E2E-030: Get workflow instance"
-  RESPONSE=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":30,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator:instance:get\",\"arguments\":{\"instanceId\":\"$INSTANCE_ID\"}}}")
+  RESPONSE=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":30,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator-instance-get\",\"arguments\":{\"instanceId\":\"$INSTANCE_ID\"}}}")
   DATA=$(extract_data "$RESPONSE")
   INST_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
   INST_JSON=$(echo "$INST_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -351,7 +351,7 @@ else
   elif [[ "$INST_STATUS" == "ACTIVE" ]]; then
     log "Instance still ACTIVE, waiting 5s and retrying..."
     sleep 5
-    RESPONSE=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":31,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator:instance:get\",\"arguments\":{\"instanceId\":\"$INSTANCE_ID\"}}}")
+    RESPONSE=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":31,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator-instance-get\",\"arguments\":{\"instanceId\":\"$INSTANCE_ID\"}}}")
     DATA=$(extract_data "$RESPONSE")
     INST_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
     INST_JSON=$(echo "$INST_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -420,7 +420,7 @@ fi
 
 # TC-E2E-041: Execute non-existent workflow
 log "TC-E2E-041: Execute non-existent workflow returns error"
-RESPONSE=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":41,"method":"tools/call","params":{"name":"orchestrator:workflow:execute","arguments":{"workflowId":"nonexistent-workflow-xyz","inputData":{"x":"y"}}}}')
+RESPONSE=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":41,"method":"tools/call","params":{"name":"orchestrator-workflow-execute","arguments":{"workflowId":"nonexistent-workflow-xyz","inputData":{"x":"y"}}}}')
 DATA=$(extract_data "$RESPONSE")
 EXEC_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
 EXEC_JSON=$(echo "$EXEC_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -434,7 +434,7 @@ fi
 
 # TC-E2E-042: Get non-existent instance
 log "TC-E2E-042: Get non-existent instance returns error"
-RESPONSE=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":42,"method":"tools/call","params":{"name":"orchestrator:instance:get","arguments":{"instanceId":"00000000-0000-0000-0000-000000000000"}}}')
+RESPONSE=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":42,"method":"tools/call","params":{"name":"orchestrator-instance-get","arguments":{"instanceId":"00000000-0000-0000-0000-000000000000"}}}')
 DATA=$(extract_data "$RESPONSE")
 INST_TEXT=$(echo "$DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
 INST_JSON=$(echo "$INST_TEXT" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -473,7 +473,7 @@ else
   log "TC-E2E-050: Full lifecycle: list -> execute -> get"
 
   # Step 1: List workflows
-  R1=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":50,"method":"tools/call","params":{"name":"orchestrator:workflows:list","arguments":{}}}')
+  R1=$(mcp_call "$GUEST_TOKEN" '{"jsonrpc":"2.0","id":50,"method":"tools/call","params":{"name":"orchestrator-workflows-list","arguments":{}}}')
   D1=$(extract_data "$R1")
   T1=$(echo "$D1" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
   J1=$(echo "$T1" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -488,7 +488,7 @@ print('yes' if wf and wf.get('isAvailable', True) else 'no')
     fail "TC-E2E-050: Lifecycle step 1 failed: workflow '$WORKFLOW' not found or not available"
   else
     # Step 2: Execute the workflow
-    R2=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":51,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator:workflow:execute\",\"arguments\":{\"workflowId\":\"$WORKFLOW\",\"inputData\":{\"name\":\"Lifecycle Test\",\"language\":\"English\"}}}}")
+    R2=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":51,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator-workflow-execute\",\"arguments\":{\"workflowId\":\"$WORKFLOW\",\"inputData\":{\"name\":\"Lifecycle Test\",\"language\":\"English\"}}}}")
     D2=$(extract_data "$R2")
     T2=$(echo "$D2" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
     J2=$(echo "$T2" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -499,7 +499,7 @@ print('yes' if wf and wf.get('isAvailable', True) else 'no')
     else
       # Step 3: Wait and get instance
       sleep 3
-      R3=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":52,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator:instance:get\",\"arguments\":{\"instanceId\":\"$LC_INSTANCE\"}}}")
+      R3=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":52,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator-instance-get\",\"arguments\":{\"instanceId\":\"$LC_INSTANCE\"}}}")
       D3=$(extract_data "$R3")
       T3=$(echo "$D3" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
       J3=$(echo "$T3" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')
@@ -510,7 +510,7 @@ print('yes' if wf and wf.get('isAvailable', True) else 'no')
         pass "TC-E2E-050: Full lifecycle completed: list->execute->get (status=$LC_STATUS, instanceId=$LC_INSTANCE)"
       elif [[ "$LC_STATUS" == "ACTIVE" ]]; then
         sleep 5
-        R3=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":53,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator:instance:get\",\"arguments\":{\"instanceId\":\"$LC_INSTANCE\"}}}")
+        R3=$(mcp_call "$GUEST_TOKEN" "{\"jsonrpc\":\"2.0\",\"id\":53,\"method\":\"tools/call\",\"params\":{\"name\":\"orchestrator-instance-get\",\"arguments\":{\"instanceId\":\"$LC_INSTANCE\"}}}")
         D3=$(extract_data "$R3")
         T3=$(echo "$D3" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['content'][0]['text'])" 2>/dev/null || echo "")
         J3=$(echo "$T3" | sed 's/^```json//' | sed 's/^```//' | tr -d '\n')

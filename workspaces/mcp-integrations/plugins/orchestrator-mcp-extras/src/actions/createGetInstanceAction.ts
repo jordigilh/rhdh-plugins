@@ -70,7 +70,7 @@ export const createGetInstanceAction = ({
   logger: LoggerService;
 }) => {
   actionsRegistry.register({
-    name: 'orchestrator:instance:get',
+    name: 'orchestrator-instance-get',
     title: 'Get Orchestrator Workflow Instance',
     attributes: {
       destructive: false,
@@ -79,11 +79,11 @@ export const createGetInstanceAction = ({
     },
     description: `Get the status and details of a workflow execution instance by its ID.
 Returns the current state, start/end timestamps, workflow data, and any error information.
-Use the instanceId returned from orchestrator:workflow:execute to track progress.
+Use the instanceId returned from orchestrator-workflow-execute to track progress.
 
 Example invocations:
   # Check the status of a workflow execution
-  orchestrator:instance:get instanceId:"abc-123-def-456"
+  orchestrator-instance-get instanceId:"abc-123-def-456"
   Output: {
     "id": "abc-123-def-456",
     "workflowId": "greeting",
@@ -167,7 +167,7 @@ Example invocations:
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(
-          `orchestrator:instance:get: Error fetching instance '${input.instanceId}':`,
+          `orchestrator-instance-get: Error fetching instance '${input.instanceId}':`,
           error instanceof Error ? error : undefined,
         );
         return {

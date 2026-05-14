@@ -63,3 +63,5 @@ site
 
 # Cursor IDE configuration files
 .cursorrules
+.cursor/mcp.json
+.cursor/plans/
